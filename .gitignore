@@ -1,0 +1,4 @@
+/.vscode
+/checkpoints
+/VQA2
+*.pyc
