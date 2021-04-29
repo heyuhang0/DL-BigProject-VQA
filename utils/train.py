@@ -38,17 +38,19 @@ def validate_model(model, validloader, criterion, device='cuda'):
     total = 0
 
     with torch.no_grad():
-        for images, questions, labels in validloader:
-            images = images.to(device)
-            questions = questions.to(device)
-            labels = labels.to(device)
+        for batch in validloader:
+            batch = [
+                data.to(device) if torch.is_tensor(data) else data
+                for data in batch]
+            inputs = batch[:-1]
+            labels = batch[-1]
 
-            outputs = model.forward(images, questions)
+            outputs = model.forward(*inputs)
             test_loss += _do_criterion(criterion, outputs, labels).item()
 
             equality = (labels.data == _do_prediction(outputs))
             accuracy += equality.type(torch.FloatTensor).sum()
-            total += len(images)
+            total += len(labels)
 
     return float(test_loss/len(validloader)), float(accuracy/total)
 
@@ -101,17 +103,19 @@ def train_model(
         validated = False
 
         progressbar = ProgressBar()
-        for images, questions, labels in progressbar(trainloader):
+        for batch in progressbar(trainloader):
             steps += 1
 
             # Prepare data
-            images = images.to(device)
-            questions = questions.to(device)
-            labels = labels.to(device)
+            batch = [
+                data.to(device) if torch.is_tensor(data) else data
+                for data in batch]
+            inputs = batch[:-1]
+            labels = batch[-1]
 
             # Forward
             optimizer.zero_grad()
-            outputs = model.forward(images, questions)
+            outputs = model.forward(*inputs)
 
             # Backward
             loss = _do_criterion(criterion, outputs, labels)
