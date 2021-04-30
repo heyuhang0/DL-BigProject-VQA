@@ -166,6 +166,7 @@ def train_model(
                 progressbar.content += f' - saved to {checkpoint_path}'
 
     history = {
+        'epoch_size': len(trainloader),
         'valid_every': valid_every,
         'total_steps': steps,
         'train_loss_history': train_loss_history,
@@ -177,14 +178,15 @@ def train_model(
 
 
 def _plot_history(history, ax_loss, ax_accuracy, label_suffix='', index=0):
+    epoch_size = history['epoch_size']
     valid_every = history['valid_every']
     train_loss_history = history['train_loss_history']
     valid_loss_history = history['valid_loss_history']
     train_accuracy_history = history['train_accuracy_history']
     valid_accuracy_history = history['valid_accuracy_history']
 
-    train_steps = np.array(range(valid_every, len(train_loss_history) + 1)) / valid_every
-    valid_steps = (np.array(range(len(valid_loss_history))) + 1)
+    train_steps = np.array(range(valid_every, len(train_loss_history) + 1)) / epoch_size
+    valid_steps = (np.array(range(len(valid_loss_history))) + 1) * valid_every / epoch_size
 
     train_loss_history = np.convolve(
         train_loss_history, np.ones(valid_every)/valid_every, mode='valid'
