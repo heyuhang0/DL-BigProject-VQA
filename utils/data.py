@@ -152,3 +152,73 @@ class VQA2Dataset(Dataset):
             answer = self.target_transform(answer)
 
         return image, question_text, answer
+
+
+class EasyVQADataset(Dataset):
+    """ VQA2 Yes/No Question Dataset """
+
+    def __init__(
+            self,
+            train: bool = True,
+            image_transform: Optional[Callable] = None,
+            text_transform: Optional[Callable] = None,
+            text_transform_factory: Optional[Callable[[Iterable[str]], Callable]] = None,
+            target_transform: Optional[Callable] = None
+    ) -> None:
+        """
+        Args:
+            root (string): Root directory of dataset
+            train (bool, optional): If True, creates the train set,
+                otherwise creates the validation set
+            image_transform (callable, optional): Optional transform to be applied on the input PIL image.
+            text_transform (callable, optional): Optional transform to be applied on the input question string.
+            text_transform_factory (callable, optional): Optional tranform factory to override text_transform;
+                the factory function should take in training corpus(list of string) and return a text_transform
+                function.
+        """
+        super().__init__()
+        self.train = train
+        self.image_transform = image_transform
+        self.text_transform = text_transform
+        self.target_transform = target_transform
+
+        import easy_vqa
+
+        if self.train:
+            data = easy_vqa.get_train_questions()
+            paths = easy_vqa.get_train_image_paths()
+        else:
+            data = easy_vqa.get_test_questions()
+            paths = easy_vqa.get_test_image_paths()
+
+        self.questions = []
+        self.answers = []
+        self.image_paths = []
+        for question, answer, image_id in zip(*data):
+            if answer != 'yes' and answer != 'no':
+                continue
+            self.questions.append(question)
+            self.answers.append(answer == 'yes')
+            self.image_paths.append(paths[image_id])
+
+        if text_transform_factory is not None:
+            self.text_transform = text_transform_factory(self.questions)
+
+    def __len__(self):
+        return len(self.questions)
+
+    def __getitem__(self, idx):
+        image = Image.open(self.image_paths[idx])
+        question_text = self.questions[idx]
+        answer = self.answers[idx]
+
+        if self.image_transform is not None:
+            image = self.image_transform(image)
+
+        if self.text_transform is not None:
+            question_text = self.text_transform(question_text)
+
+        if self.target_transform is not None:
+            answer = self.target_transform(answer)
+
+        return image, question_text, answer
