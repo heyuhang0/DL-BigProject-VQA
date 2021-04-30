@@ -177,7 +177,7 @@ def train_model(
     return history
 
 
-def _plot_history(history, ax_loss, ax_accuracy, label_suffix='', index=0):
+def _plot_history(history, ax_loss, ax_accuracy, label_suffix='', index=-1):
     epoch_size = history['epoch_size']
     valid_every = history['valid_every']
     train_loss_history = history['train_loss_history']
@@ -195,14 +195,23 @@ def _plot_history(history, ax_loss, ax_accuracy, label_suffix='', index=0):
         train_accuracy_history, np.ones(valid_every)/valid_every, mode='valid'
     )
 
-    color = list(mcolors.TABLEAU_COLORS)[index]
-    ax_loss.plot(train_steps, train_loss_history, label='training loss'+label_suffix, c=color)
-    ax_loss.plot(valid_steps, valid_loss_history, '--',
-                 label='validation loss'+label_suffix, c=color)
+    train_style, valid_style = {}, {}
+    if index >= 0:
+        train_style = {
+            'color': list(mcolors.TABLEAU_COLORS)[index],
+        }
+        valid_style = {
+            'color': list(mcolors.TABLEAU_COLORS)[index],
+            'ls': '--'
+        }
+    ax_loss.plot(train_steps, train_loss_history,
+                 label='training loss'+label_suffix, **train_style)
+    ax_loss.plot(valid_steps, valid_loss_history,
+                 label='validation loss'+label_suffix, **valid_style)
     ax_accuracy.plot(train_steps, train_accuracy_history,
-                     label='training accuracy'+label_suffix, c=color)
-    ax_accuracy.plot(valid_steps, valid_accuracy_history, '--',
-                     label='validation accuracy'+label_suffix, c=color)
+                     label='training accuracy'+label_suffix, **train_style)
+    ax_accuracy.plot(valid_steps, valid_accuracy_history,
+                     label='validation accuracy'+label_suffix, **valid_style)
 
 
 def plot_history(history: Dict[str, Any]):
