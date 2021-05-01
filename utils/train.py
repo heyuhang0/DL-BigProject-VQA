@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime
 from typing import Any, Dict, Union
@@ -97,6 +98,17 @@ def train_model(
     valid_loss_history = []
     valid_accuracy_history = []
 
+    def dumpy_history():
+        return {
+            'epoch_size': len(trainloader),
+            'valid_every': valid_every,
+            'total_steps': steps,
+            'train_loss_history': train_loss_history,
+            'train_accuracy_history': train_accuracy_history,
+            'valid_loss_history': valid_loss_history,
+            'valid_accuracy_history': valid_accuracy_history,
+        }
+
     for e in range(epochs):
         print(f'Epoch: {e+1}/{epochs} @ {datetime.now()}')
         model.train()
@@ -140,6 +152,11 @@ def train_model(
                 valid_loss_history.append(valid_loss)
                 valid_accuracy_history.append(valid_accuracy)
 
+                # Dump history
+                history = dumpy_history()
+                with open(os.path.join(checkpoints_dir, 'history.json'), mode='w') as fp:
+                    json.dump(history, fp)
+
                 # Make sure training is back on
                 model.train()
                 validated = True
@@ -165,16 +182,7 @@ def train_model(
                 torch.save(model_states, checkpoint_path)
                 progressbar.content += f' - saved to {checkpoint_path}'
 
-    history = {
-        'epoch_size': len(trainloader),
-        'valid_every': valid_every,
-        'total_steps': steps,
-        'train_loss_history': train_loss_history,
-        'train_accuracy_history': train_accuracy_history,
-        'valid_loss_history': valid_loss_history,
-        'valid_accuracy_history': valid_accuracy_history,
-    }
-    return history
+    return dumpy_history()
 
 
 def _plot_history(history, ax_loss, ax_accuracy, label_suffix='', index=-1):
