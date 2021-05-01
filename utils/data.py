@@ -9,8 +9,16 @@ from torch.utils.data import Dataset
 from torchvision.datasets.utils import download_and_extract_archive, download_url
 
 
+def yes_no_only_filter(q: str, a: str) -> bool:
+    return a == 'yes' or a == 'no'
+
+
+def single_word_answer_filter(q: str, a: str) -> bool:
+    return len(a.split()) == 0
+
+
 class VQA2Dataset(Dataset):
-    """ VQA2 Yes/No Question Dataset """
+    """ VQA2 Dataset """
 
     resources = [
         # (URL, extract?)
@@ -26,10 +34,12 @@ class VQA2Dataset(Dataset):
             self,
             root: str,
             train: bool = True,
+            filter_func: Callable[[str, str], bool] = yes_no_only_filter,
             image_transform: Optional[Callable] = None,
-            text_transform: Optional[Callable] = None,
-            text_transform_factory: Optional[Callable[[Iterable[str]], Callable]] = None,
-            target_transform: Optional[Callable] = None,
+            question_transform: Optional[Callable] = None,
+            question_transform_factory: Optional[Callable[[Iterable[str]], Callable]] = None,
+            answer_transform: Optional[Callable] = None,
+            answer_transform_factory: Optional[Callable[[Iterable[str]], Callable]] = None,
             download: bool = False
     ) -> None:
         """
@@ -38,8 +48,8 @@ class VQA2Dataset(Dataset):
             train (bool, optional): If True, creates the train set,
                 otherwise creates the validation set
             image_transform (callable, optional): Optional transform to be applied on the input PIL image.
-            text_transform (callable, optional): Optional transform to be applied on the input question string.
-            text_transform_factory (callable, optional): Optional tranform factory to override text_transform;
+            question_transform (callable, optional): Optional transform to be applied on the input question string.
+            question_transform_factory (callable, optional): Optional tranform factory to override text_transform;
                 the factory function should take in training corpus(list of string) and return a text_transform
                 function.
             download (bool, optional): If true, downloads the dataset from the internet and
@@ -50,8 +60,8 @@ class VQA2Dataset(Dataset):
         self.root = root
         self.train = train
         self.image_transform = image_transform
-        self.text_transform = text_transform
-        self.target_transform = target_transform
+        self.question_transform = question_transform
+        self.answer_transform = answer_transform
 
         # Check dataset
         if download:
@@ -74,19 +84,23 @@ class VQA2Dataset(Dataset):
         self._questions = []
         for question in questions_json['questions']:
             annotation = annotations[question['question_id']]
-            if annotation['answer_type'] != 'yes/no':
-                continue
             question_text = question['question']
             image_id = question['image_id']
-            answer = annotation['multiple_choice_answer'] == 'yes'
+            answer = annotation['multiple_choice_answer']
+            if not filter_func(question_text, answer):
+                continue
             self._questions.append((image_id, question_text, answer))
 
         self._coco_zip = zipfile.ZipFile(self.coco_path, mode='r')
 
         # Create text transform
-        if text_transform_factory is not None:
+        if question_transform_factory is not None:
             corpus = [q[1] for q in self._questions]
-            self.text_transform = text_transform_factory(corpus)
+            self.question_transform = question_transform_factory(corpus)
+
+        if answer_transform_factory is not None:
+            corpus = [q[2] for q in self._questions]
+            self.answer_transform = answer_transform_factory(corpus)
 
     @property
     def group(self) -> str:
@@ -139,23 +153,23 @@ class VQA2Dataset(Dataset):
         return image
 
     def __getitem__(self, idx):
-        image_id, question_text, answer = self._questions[idx]
+        image_id, question, answer = self._questions[idx]
         image = self._get_image(image_id)
 
         if self.image_transform is not None:
             image = self.image_transform(image)
 
-        if self.text_transform is not None:
-            question_text = self.text_transform(question_text)
+        if self.question_transform is not None:
+            question = self.question_transform(question)
 
-        if self.target_transform is not None:
-            answer = self.target_transform(answer)
+        if self.answer_transform is not None:
+            answer = self.answer_transform(answer)
 
-        return image, question_text, answer
+        return image, question, answer
 
 
 class EasyVQADataset(Dataset):
-    """ VQA2 Yes/No Question Dataset """
+    """ EasyVQA Dataset """
 
     def __init__(
             self,
