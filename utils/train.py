@@ -156,6 +156,13 @@ def train_model(
                 history = dumpy_history()
                 with open(os.path.join(checkpoints_dir, 'history.json'), mode='w') as fp:
                     json.dump(history, fp)
+                fig = plt.figure(figsize=(8, 8))
+                ax1 = fig.add_subplot(211)
+                ax2 = fig.add_subplot(212)
+                _plot_history(history, ax1, ax2)
+                ax1.legend()
+                ax2.legend()
+                fig.savefig(os.path.join(checkpoints_dir, 'history.png'))
 
                 # Make sure training is back on
                 model.train()
