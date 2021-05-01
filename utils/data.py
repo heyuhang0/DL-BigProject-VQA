@@ -14,7 +14,7 @@ def yes_no_only_filter(q: str, a: str) -> bool:
 
 
 def single_word_answer_filter(q: str, a: str) -> bool:
-    return len(a.split()) == 0
+    return len(a.split()) == 1
 
 
 class VQA2Dataset(Dataset):
