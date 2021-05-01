@@ -163,6 +163,7 @@ def train_model(
                 ax1.legend()
                 ax2.legend()
                 fig.savefig(os.path.join(checkpoints_dir, 'history.png'))
+                plt.close(fig)
 
                 # Make sure training is back on
                 model.train()
