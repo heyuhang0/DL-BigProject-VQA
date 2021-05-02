@@ -28,7 +28,7 @@ def load_ResNet50FPN_GloveLSTM_attention(device='cpu') -> Callable[[Image.Image,
     answer_vocab = Vocab(Counter(answer_freqs), specials=['<unk>'], min_freq=10)
 
     model = VQANet(question_vocab, len(answer_vocab), None)
-    state_dict = torch.load('model_ResNet50FPN_GloveLSTM_attention.pth')
+    state_dict = torch.load('model_ResNet50FPN_GloveLSTM_attention.pth', map_location=device)
     model.load_state_dict(state_dict)
     model.to(device)
     model.eval()
