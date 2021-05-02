@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Union
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -230,7 +230,7 @@ def _plot_history(history, ax_loss, ax_accuracy, label_suffix='', index=-1):
                      label='validation accuracy'+label_suffix, **valid_style)
 
 
-def plot_history(history: Dict[str, Any]):
+def plot_history(history: Dict[str, Any]) -> None:
     fig = plt.figure(figsize=(8, 8))
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
@@ -238,6 +238,25 @@ def plot_history(history: Dict[str, Any]):
     ax1.legend()
     ax2.legend()
     plt.show()
+
+
+def plot_history_from_checkpoints(checkpoints: List[str]) -> None:
+    history = None
+    for ckpt in checkpoints:
+        with open(os.path.join(ckpt, 'history.json'), 'r') as fp:
+            h = json.load(fp)
+        if history is None:
+            history = h
+        else:
+            history['total_steps'] = h['total_steps']
+            for key in (
+                'train_loss_history',
+                'train_accuracy_history',
+                'valid_loss_history',
+                'valid_accuracy_history'
+            ):
+                history[key].extend(h[key])
+    plot_history(history)
 
 
 def plot_histories(histories: Dict[str, Dict[str, Any]], loss_ylim=(0.0, 0.8)):
