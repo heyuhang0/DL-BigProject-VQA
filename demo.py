@@ -14,21 +14,22 @@ from torchtext.vocab import Vocab
 from torchvision import transforms
 
 
-def load_ResNet50FPN_GloveLSTM_attention(device='cpu') -> Callable[[Image.Image, str], str]:
-    from model_ResNet50FPN_GloveLSTM_attention import VQANet
+def load_attention_faster_rcnn(model_type, device='cpu') -> Callable[[Image.Image, str], str]:
+    from models.attention_faster_rcnn import VQANet_RCNN_Attention
 
     device = torch.device(device)
 
-    with open('vocab_question.json', 'r', encoding='utf-8') as fp:
+    with open(f'./models/attention_faster_rcnn_{model_type}_questions.json', 'r', encoding='utf-8') as fp:
         question_freqs = json.load(fp)
-    with open('vocab_answer.json', 'r', encoding='utf-8') as fp:
+    with open(f'./models/attention_faster_rcnn_{model_type}_answers.json', 'r', encoding='utf-8') as fp:
         answer_freqs = json.load(fp)
 
     question_vocab = Vocab(Counter(question_freqs), specials=['<pad>', '<unk>'])
     answer_vocab = Vocab(Counter(answer_freqs), specials=['<unk>'], min_freq=10)
 
-    model = VQANet(question_vocab, len(answer_vocab), None)
-    state_dict = torch.load('model_ResNet50FPN_GloveLSTM_attention.pth', map_location=device)
+    state_dict = torch.load(f'./models/attention_faster_rcnn_{model_type}_weights.pth', map_location=device)
+
+    model = VQANet_RCNN_Attention(question_vocab, len(answer_vocab), None)
     model.load_state_dict(state_dict)
     model.to(device)
     model.eval()
@@ -98,9 +99,8 @@ def load_ResNet50FPN_GloveLSTM_attention(device='cpu') -> Callable[[Image.Image,
 app = Flask(__name__)
 
 model_loaders = {
-    'attention_all': load_ResNet50FPN_GloveLSTM_attention
-
-
+    'attention_sw': (load_attention_faster_rcnn, {'model_type': 'sw'}),
+    'attention_yn': (load_attention_faster_rcnn, {'model_type': 'yn'}),
 }
 
 models = {}
@@ -125,10 +125,11 @@ def vqa():
     question = request.json.get('question', 'what is this?')
 
     # Get model
-    model_name = request.json.get('model', 'attention_all')
+    model_name = request.json.get('model', 'attention_sw')
     if model_name in model_loaders:
         if model_name not in models:
-            models[model_name] = model_loaders[model_name]()
+            loader, args = model_loaders[model_name]
+            models[model_name] = loader(**args)
         model = models[model_name]
     else:
         msg = f'unknown model: {model_name}'
