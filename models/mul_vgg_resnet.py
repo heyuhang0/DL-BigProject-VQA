@@ -4,10 +4,10 @@ import torchvision.models as models
 
 
 class ImgEncoder_ResNet(nn.Module):
-    def __init__(self, embed_size):
+    def __init__(self, embed_size, pretrained=True):
         super(ImgEncoder_ResNet, self).__init__()
         # load the pretrained model
-        model = models.resnet152(pretrained=True)
+        model = models.resnet152(pretrained=pretrained)
         in_features = model.fc.in_features
         # replace the final fully connected layer so that the output dimension is embedding size
         model.fc = nn.Linear(in_features, embed_size)
@@ -23,10 +23,10 @@ class ImgEncoder_ResNet(nn.Module):
 
 
 class ImgEncoder_VGG(nn.Module):
-    def __init__(self, embed_size):
+    def __init__(self, embed_size, pretrained=True):
         super(ImgEncoder_VGG, self).__init__()
         # load the pretrained model
-        model = models.vgg19(pretrained=True)
+        model = models.vgg19(pretrained=pretrained)
         in_features = model.classifier[-1].in_features
         # remove the last layer(fc) and design customized layer
         model.classifier = nn.Sequential(
@@ -69,15 +69,18 @@ class QstEncoder(nn.Module):
 class VqaModel_Mul(nn.Module):
     # This VQA model is used for training all single-word-answer datasets
 
-    def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, img_process="vgg"):
-
+    def __init__(
+        self, embed_size, qst_vocab_size, ans_vocab_size,
+        word_embed_size, num_layers, hidden_size,
+        img_process="vgg", pretrained_img=True
+    ):
         super(VqaModel_Mul, self).__init__()
         if img_process not in ["vgg", "resnet"]:
             raise TypeError("img_process shoud be 'vgg' or 'resnet")
         if img_process == 'vgg':
-            self.img_encoder = ImgEncoder_VGG(embed_size)
+            self.img_encoder = ImgEncoder_VGG(embed_size, pretrained_img)
         else:
-            self.img_encoder = ImgEncoder_VGG(embed_size)
+            self.img_encoder = ImgEncoder_ResNet(embed_size, pretrained_img)
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.5)
@@ -100,15 +103,18 @@ class VqaModel_Mul(nn.Module):
 class VqaModel_Mul_bin(nn.Module):
     # This VQA model is used for training only yes-no-answer datasets
 
-    def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, img_process="vgg"):
-
+    def __init__(
+        self, embed_size, qst_vocab_size, ans_vocab_size,
+        word_embed_size, num_layers, hidden_size,
+        img_process="vgg", pretrained_img=True
+    ):
         super(VqaModel_Mul_bin, self).__init__()
         if img_process not in ["vgg", "resnet"]:
             raise TypeError("img_process shoud be 'vgg' or 'resnet")
         if img_process == 'vgg':
-            self.img_encoder = ImgEncoder_VGG(embed_size)
+            self.img_encoder = ImgEncoder_VGG(embed_size, pretrained_img)
         else:
-            self.img_encoder = ImgEncoder_VGG(embed_size)
+            self.img_encoder = ImgEncoder_ResNet(embed_size, pretrained_img)
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(0.5)
