@@ -39,7 +39,7 @@ function App() {
   // VQA states
   const [image, setImage] = useState(null);
   const [question, setQuestion] = useState('');
-  const defaultModel = 'attention_all';
+  const defaultModel = 'attention_sw';
   const [model, setModel] = useState(defaultModel);
 
   return (
@@ -51,8 +51,9 @@ function App() {
           </Col>
           <Col span={12}>
             <Select className="model-selector" defaultValue={defaultModel}onChange={setModel}>
-              <Option value="attention_all">Attention(single word)</Option>
-              {/* <Option value="attention_y/n">Attention(yes/no)</Option> */}
+              <Option value="attention_sw">Attention(single word)</Option>
+              <Option value="attention_yn">Attention(yes/no)</Option>
+              <Option value="mul_vgg_yn">Mul-VGG(yes/no)</Option>
             </Select>
           </Col>
         </Row>
