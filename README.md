@@ -11,9 +11,9 @@ easy-vqa
 ```
 
 # Submition List
-* `vqa2_mul_vgg.ipynb` create, training, loading trained model, testing the best model (Faster R-CNN + element-wise multiplication model trained on yes/no dataset)
-* `vqa2_attention_faster_rcnn.ipynb`: create, training, loading trained model, testing the best model (VGG + element-wise multiplication model trained on yes/no dataset)
-* `VQA2_Dataset_Visualization.ipynb`: notebook to prepare and save the data for VQA2.0 dataset visualisation
+* `vqa2_attention_faster_rcnn.ipynb` create, training, loading trained model, testing the best model (Faster R-CNN + element-wise multiplication model trained on yes/no dataset)
+* ``: create, training, loading trained model, testing the best model (VGG + element-wise multiplication model trained on yes/no dataset)
+* `vqa2_mul_vgg.ipynb`: notebook to prepare and save the data for VQA2.0 dataset visualisation
 * `dataset_visualization.xlsx`: VQA2.0 dataset visualisation graphs creation
 * `utils/` folder: util files for model training related tasks, including creating training dataset and dataloader, training models, plotting model history, testing models
 * `models/`: all the models we have experimented with, and selected model weights
@@ -40,7 +40,7 @@ run notebook `VQA2_Dataset_Visualization.ipynb` to prepare and save the data for
 
 run `demo.py` in project root folder
 
-run the following command in another terminal in the project root folder
+run the following command in another terminal in the folder `demo-frontend`
 ```
 yarn install
 yarn start
