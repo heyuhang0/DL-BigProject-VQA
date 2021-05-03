@@ -6,6 +6,7 @@ import torch.nn.utils.rnn as rnn_utils
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 
 
+# Image feature extraction
 class VNet(nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
@@ -16,6 +17,7 @@ class VNet(nn.Module):
         return self.backbone(images)['3']
 
 
+# Text feature extraction
 class QNet(nn.Module):
     def __init__(self, vocab, embedding_dim, out_dim, weights_path=None):
         super().__init__()
@@ -51,12 +53,15 @@ class QNet(nn.Module):
         return features
 
 
+# VQA model
 class VQANet_RCNN_Attention(nn.Module):
     def __init__(self, vocab, num_classes: int, glove_path='./glove.6B.100d.txt'):
         super().__init__()
+        # create image feature extraction net, text feature extraction net
         self.v_net = VNet()
         self.q_net = QNet(vocab, 100, 256, glove_path)
 
+        # attention
         self.v_query = nn.Sequential(
             nn.Conv2d(256, 128, 1),
             nn.Sigmoid())
@@ -69,6 +74,7 @@ class VQANet_RCNN_Attention(nn.Module):
             nn.Linear(256, 256),
             nn.Sigmoid())
 
+        # classifier
         self.classifier = nn.Sequential(
             nn.Linear(256, 512),
             nn.ReLU(True),
