@@ -145,7 +145,8 @@ def load_mul_vgg(device='cpu') -> Callable[[Image.Image, str], str]:
             # predict
             output = model(images.to(device), questions.to(device))
             answer = answer_vocab.itos[int(output.item() > 0.5)]
-            return [f'{answer} (confidence: {output.item():.2f})']
+            confidence = max(output.item(), 1 - output.item())
+            return [f'{answer} (confidence: {confidence:.2f})']
 
     return predict
 
