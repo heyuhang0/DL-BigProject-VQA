@@ -17,7 +17,7 @@ class ImgEncoder_ResNet(nn.Module):
         with torch.no_grad():
             img_feature = self.model(image)
         # normalize the image feature vector
-        l2_norm = img_feature.norm(p=2,dim=1,keepdim=True).detach()
+        l2_norm = img_feature.norm(p=2, dim=1, keepdim=True).detach()
         img_feature = img_feature.div(l2_norm)
         return img_feature
 
@@ -94,12 +94,12 @@ class VqaModel_Mul(nn.Module):
         combined_feature = self.fc1(combined_feature)           # [batch_size, ans_vocab_size]
         # training on all single-word-answer questions,
         # so the output dimension size is ans_vocab_size instead of a single score value
-        return combined_feature   
+        return combined_feature
 
 
 class VqaModel_Mul_bin(nn.Module):
     # This VQA model is used for training only yes-no-answer datasets
-    
+
     def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size, img_process="vgg"):
 
         super(VqaModel_Mul_bin, self).__init__()
