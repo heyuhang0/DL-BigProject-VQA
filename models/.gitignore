@@ -1,8 +1,13 @@
 # Please download those files from the link in README
 glove.6B.100d.txt
+
 attention_faster_rcnn_sw_questions.json
 attention_faster_rcnn_sw_answers.json
 attention_faster_rcnn_sw_weights.pth
+
 attention_faster_rcnn_yn_questions.json
 attention_faster_rcnn_yn_answers.json
 attention_faster_rcnn_yn_weights.pth
+
+mul_vgg_yn_questions.json
+mul_vgg_yn_weights.pth

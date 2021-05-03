@@ -1,11 +1,7 @@
-# Import libraries
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.nn.init as init
-import torch.nn.utils.rnn as rnn_utils
-import torchvision
 import torchvision.models as models
+
 
 class ImgEncoder_ResNet(nn.Module):
     def __init__(self, embed_size):
@@ -14,13 +10,14 @@ class ImgEncoder_ResNet(nn.Module):
         in_features = model.fc.in_features
         model.fc = nn.Linear(in_features, embed_size)
         self.model = model
-        
+
     def forward(self, image):
         with torch.no_grad():
             img_feature = self.model(image)
-        l2_norm = img_feature.norm(p=2,dim=1,keepdim=True).detach()
+        l2_norm = img_feature.norm(p=2, dim=1, keepdim=True).detach()
         img_feature = img_feature.div(l2_norm)
         return img_feature
+
 
 class ImgEncoder_VGG(nn.Module):
     def __init__(self, embed_size):
@@ -31,23 +28,24 @@ class ImgEncoder_VGG(nn.Module):
             *list(model.classifier.children())[:-1])
         self.model = model
         self.fc = nn.Linear(in_features, embed_size)
-        
+
     def forward(self, image):
         with torch.no_grad():
             img_feature = self.model(image)
         img_feature = self.fc(img_feature)
-        l2_norm = img_feature.norm(p=2,dim=1,keepdim=True).detach()
+        l2_norm = img_feature.norm(p=2, dim=1, keepdim=True).detach()
         img_feature = img_feature.div(l2_norm)
         return img_feature
-    
+
+
 class QstEncoder(nn.Module):
     def __init__(self, qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size):
-        super(QstEncoder,self).__init__()
+        super(QstEncoder, self).__init__()
         self.word2vec = nn.Embedding(qst_vocab_size, word_embed_size)
         self.tanh = nn.Tanh()
         self.lstm = nn.LSTM(word_embed_size, hidden_size, num_layers)
-        self.fc = nn.Linear(2*num_layers*hidden_size, embed_size) #2 for hidden and cell states
-        
+        self.fc = nn.Linear(2*num_layers*hidden_size, embed_size)  # 2 for hidden and cell states
+
     def forward(self, question):
         qst_vec = self.word2vec(question)                             # [batch_size, max_qst_length=30, word_embed_size=300]
         qst_vec = self.tanh(qst_vec)
@@ -60,7 +58,7 @@ class QstEncoder(nn.Module):
         qst_feature = self.fc(qst_feature)                            # [batch_size, embed_size]
 
         return qst_feature
-    
+
 
 class VqaModel_Mul(nn.Module):
 
@@ -80,14 +78,14 @@ class VqaModel_Mul(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, img, qst):
-        qst = torch.transpose(qst, 0, 1).cuda()
+        qst = torch.transpose(qst, 0, 1)
         img_feature = self.img_encoder(img)                     # [batch_size, embed_size]
         qst_feature = self.qst_encoder(qst)                     # [batch_size, embed_size]
         combined_feature = torch.mul(img_feature, qst_feature)  # [batch_size, embed_size]
         combined_feature = self.tanh(combined_feature)
         combined_feature = self.dropout(combined_feature)
         combined_feature = self.fc1(combined_feature)           # [batch_size, ans_vocab_size=1000]
-        return combined_feature   
+        return combined_feature
 
 
 class VqaModel_Mul_bin(nn.Module):
@@ -108,7 +106,7 @@ class VqaModel_Mul_bin(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, img, qst):
-        qst = torch.transpose(qst, 0, 1).cuda()
+        qst = torch.transpose(qst, 0, 1)
         img_feature = self.img_encoder(img)                     # [batch_size, embed_size]
         qst_feature = self.qst_encoder(qst)                     # [batch_size, embed_size]
         combined_feature = torch.mul(img_feature, qst_feature)  # [batch_size, embed_size]
